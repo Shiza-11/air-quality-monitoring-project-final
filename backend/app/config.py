@@ -6,11 +6,19 @@ from pathlib import Path
 BACKEND = Path(__file__).resolve().parents[1]
 
 DATA = BACKEND / "data"
-RAW = DATA / "raw"
-PROCESSED = DATA / "processed"
-REPORTS = BACKEND / "reports"
 
-# Create directories automatically (skipped if the filesystem is read-only, e.g. Vercel)
+if os.environ.get("VERCEL"):
+    # Vercel's project folder is read-only, so write working files to /tmp
+    WORK = Path("/tmp")
+    RAW = WORK / "raw"
+    PROCESSED = WORK / "processed"
+    REPORTS = WORK / "reports"
+else:
+    RAW = DATA / "raw"
+    PROCESSED = DATA / "processed"
+    REPORTS = BACKEND / "reports"
+
+# Create directories automatically
 for folder in [RAW, PROCESSED, REPORTS]:
     try:
         folder.mkdir(parents=True, exist_ok=True)
@@ -21,7 +29,7 @@ for folder in [RAW, PROCESSED, REPORTS]:
 DB_SOURCE = DATA / "air_quality.db"
 
 if os.environ.get("VERCEL"):
-    # Vercel's project folder is read-only, so work from a copy in /tmp
+    # Work from a copy of the database in /tmp
     DB = Path("/tmp/air_quality.db")
     if DB_SOURCE.exists() and not DB.exists():
         shutil.copyfile(DB_SOURCE, DB)
